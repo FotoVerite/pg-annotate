@@ -1,0 +1,145 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var realist = require('realist'),
+    fs = require('fs'),
+    colors = require('colors'),
+    read = require('fs').readFileSync,
+    path = require('path'),
+    resolve = require('path').resolve,
+    join = require('path').join,
+    pf = require('prepend-file'),
+    pluralize = require('pluralize'),
+    pg = require('pg');
+
+var USAGE = read(join(__dirname, '/../usage.txt')).toString();
+
+var options = {
+    database: ['d', 'database']
+};
+
+var conString = 'postgres://postgres@localhost:5432/nsctest';
+
+
+function toDash(string) {
+    return string.replace(/([A-Z])/g, function($1) {
+        return '_' + $1.toLowerCase();
+    });
+}
+
+function queryPG(database, tableName, cb) {
+    pg.connect(conString, function(err, client, done) {
+        if (err) {
+            return console.error('error fetching client from pool', err);
+        }
+        client.query('SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = $1', [tableName], function(err, result) {
+            //call `done()` to release the client back to the pool
+            cb(result.rows);
+            done();
+
+            if (err) {
+                return console.error('error running query', err);
+            }
+        });
+    });
+}
+
+// right padding s with c to a total of n chars
+function paddingRight(s, c, n) {
+    if (!s || !c || s.length >= n) {
+        return s;
+    }
+
+    var max = (n - s.length) / c.length;
+    for (var i = 0; i < max; i++) {
+        s += c;
+    }
+
+    return s;
+}
+
+function createPrependString(commentToken, rows) {
+    var string = '';
+    string += commentToken + ' == Schema Information\n';
+    string += commentToken + '\n';
+    rows.forEach(function(column) {
+        string += commentToken;
+        string += paddingRight(column.column_name, ' ', 20);
+        string += ' ';
+        string += paddingRight(column.data_type, ' ', 30);
+        string += ' ';
+        string += column.column_default;
+        string += '\n';
+    });
+    string += commentToken + '\n';
+    return string;
+}
+
+function sanitizeFileName(fileName) {
+    fileName = fileName.replace(/get_/, '');
+    fileName = fileName.replace(/create_/, '');
+    return fileName;
+}
+
+function annotate(opts, filePath, tableName, database) {
+    var dataBaseConf = database || process.env.DATABASE_URL;
+    if (! dataBaseConf) {
+        console.log(colors.red('database url not set.\nPlease set environment DATABASE_URL or give as argument.'));
+        process.exit();
+    }
+    if (!filePath) {
+        return usage();
+    }
+    fs.exists(filePath, function(exists) {
+        if (!exists) {
+            console.log(colors.red('File ' + filePath + ' not found'));
+            process.exit();
+        } else {
+            var ext = path.extname(filePath);
+            var commentToken = ext === '.sql' ? '-- ' : '//';
+            var baseFileName = path.basename(filePath, ext);
+            var tableName = pluralize(sanitizeFileName(toDash(baseFileName)));
+
+
+            queryPG(dataBaseConf, tableName, function(columns) {
+                var annotation = createPrependString(commentToken, columns);
+                pf(filePath, annotation, function(done){
+                  if(done){
+                      console.log(colors.green('Data prepended!'));
+                      process.exit();
+                  }
+                  else {
+                      process.exit();
+                  }
+                });
+
+            });
+        }
+    });
+}
+
+
+function usage() {
+    console.log(USAGE);
+    process.exit();
+}
+
+function version(app) {
+    console.log(require('../package.json').version);
+    app.stop();
+}
+
+var events = {
+    'option help': usage,
+    'option version': version
+};
+
+realist(annotate, options, events);
+
+
+process.on('uncaughtException', function(error) {
+    console.log('Uncaught exception!'.red);
+    console.log(error && error.stack || error);
+    process.exit();
+});

@@ -14,10 +14,21 @@
     "annotate",
     "pg"
   ],
+  "bin": {
+    "pg-annotate": "bin/pg-annotate"
+  }
   "author": "Matthew Bergman",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/FotoVerite/pg-annotate/issues"
   },
-  "homepage": "https://github.com/FotoVerite/pg-annotate"
+  "homepage": "https://github.com/FotoVerite/pg-annotate",
+  "dependencies": {
+    "colors": "^1.0.3",
+    "lodash": "^2.4.1",
+    "pg": "^3.6.0",
+    "pluralize": "^1.0.2",
+    "prepend-file": "^0.1.2",
+    "realist": "^0.2.5"
+  }
 }
