@@ -1,0 +1,23 @@
+{
+  "name": "pg-annotate",
+  "version": "1.0.0",
+  "description": "Annotates postgres tables and prepend to various files that depend on their structure.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FotoVerite/pg-annotate.git"
+  },
+  "keywords": [
+    "annotate",
+    "pg"
+  ],
+  "author": "Matthew Bergman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FotoVerite/pg-annotate/issues"
+  },
+  "homepage": "https://github.com/FotoVerite/pg-annotate"
+}
