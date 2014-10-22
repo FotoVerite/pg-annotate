@@ -16,7 +16,7 @@
   ],
   "bin": {
     "pg-annotate": "bin/pg-annotate"
-  }
+  },
   "author": "Matthew Bergman",
   "license": "MIT",
   "bugs": {
