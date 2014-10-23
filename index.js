@@ -5,7 +5,7 @@ var fs = require('fs'),
     join = require('path').join,
     pf = require('./lib/pf'),
     pluralize = require('pluralize'),
-    pg = require('pg'),
+    pg = require('pg.js'),
     utils = require('./lib/utils');
 
 function queryPG(database, tableName, cb) {
