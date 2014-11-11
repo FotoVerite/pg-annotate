@@ -25,7 +25,7 @@ function queryPG(database, tableName, cb) {
     });
 }
 
-function annotate(opts, filePath, tableName, dataBaseConf) {
+function annotate(opts, filePath, tableName, dataBaseConf, cb) {
     var ext = path.extname(filePath);
     var commentToken = ext === '.sql' ? '-- ' : '//';
     var baseFileName = path.basename(filePath, ext);
@@ -36,9 +36,11 @@ function annotate(opts, filePath, tableName, dataBaseConf) {
         var annotation = utils.createPrependString(commentToken, columns);
         pf(filePath, annotation, function(done) {
             if (done) {
-                console.log(colors.green('Data prepended!'));
-                process.exit();
+                console.log(colors.green('Data prepended to ' + filePath));
+                cb(null);
             } else {
+                console.log(colors.red('ERROR Processed stopped abruptly'));
+                cb('error');
                 process.exit();
             }
         });

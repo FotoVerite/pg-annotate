@@ -3,58 +3,90 @@
 'use strict';
 
 var realist = require('realist'),
-    fs = require('fs'),
-    colors = require('colors'),
-    read = require('fs').readFileSync,
-    join = require('path').join,
-    ANNOTATE = require('../index');
+  fs = require('fs'),
+  colors = require('colors'),
+  read = require('fs').readFileSync,
+  join = require('path').join,
+  _ = require('lodash'),
+  async = require('async'),
+  glob = require("glob"),
+  ANNOTATE = require('../index');
 
 var USAGE = read(join(__dirname, '/../usage.txt')).toString();
 
 var options = {
-    sql: ['s', 'sql']
+  sql: ['s', 'sql'],
+  directory: ['d', 'directory']
 };
 
-function annotate(opts, filePath, tableName, database) {
-    var dataBaseConf = database || process.env.DATABASE_URL;
-    if (!dataBaseConf) {
-        console.log(colors.red('database url not set.\nPlease set environment DATABASE_URL or give as argument.'));
-        process.exit();
-    }
-    if (!filePath) {
-        return usage();
-    }
-    fs.exists(filePath, function(exists) {
-        if (!exists) {
-            console.log(colors.red('File ' + filePath + ' not found'));
-            process.exit();
-        } else {
-            ANNOTATE(opts, filePath, tableName, dataBaseConf);
-        }
-    });
+function annotate(opts, path, tableName, database) {
+  var dataBaseConf = database || process.env.DATABASE_URL;
+  if (!dataBaseConf) {
+    console.log(colors.red('database url not set.\nPlease set environment DATABASE_URL or give as argument.'));
+    process.exit();
+  }
+  if (opts.directory) {
+    processDirectory(opts, path, tableName, dataBaseConf);
+  } else {
+    processFile(opts, path, tableName, dataBaseConf);
+  }
 
+
+}
+
+function processDirectory(opts, path, tableName, dataBaseConf) {
+  if (!path) {
+    return usage();
+  }
+  fs.exists(path, function(exists) {
+    if (!exists) {
+      console.log(colors.red('Directory ' + path + ' not found'));
+      process.exit();
+    } else {
+      var jsAndSqlFilePaths = glob.sync(path + '+(*.sql|*.js)');
+      async.each(jsAndSqlFilePaths, function(path, cb) {
+        processFile(opts, path, tableName, dataBaseConf, cb);
+      }, function(err) {
+        process.exit();
+      });
+    }
+  });
+}
+
+function processFile(opts, path, tableName, dataBaseConf, cb) {
+  if (!path) {
+    return usage();
+  }
+  fs.exists(path, function(exists) {
+    if (!exists) {
+      console.log(colors.red('File ' + path + ' not found'));
+      process.exit();
+    } else {
+      ANNOTATE(opts, path, tableName, dataBaseConf, cb);
+    }
+  });
 }
 
 function usage() {
-    console.log(USAGE);
-    process.exit();
+  console.log(USAGE);
+  process.exit();
 }
 
 function version(app) {
-    console.log(require('../package.json').version);
-    app.stop();
+  console.log(require('../package.json').version);
+  app.stop();
 }
 
 var events = {
-    'option help': usage,
-    'option version': version
+  'option help': usage,
+  'option version': version
 };
 
 realist(annotate, options, events);
 
 
 process.on('uncaughtException', function(error) {
-    console.log('Uncaught exception!'.red);
-    console.log(error && error.stack || error);
-    process.exit();
+  console.log('Uncaught exception!'.red);
+  console.log(error && error.stack || error);
+  process.exit();
 });
