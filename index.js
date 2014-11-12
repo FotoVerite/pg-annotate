@@ -34,14 +34,12 @@ function annotate(opts, filePath, tableName, dataBaseConf, cb) {
     }
     queryPG(dataBaseConf, tableName, function(columns) {
         var annotation = utils.createPrependString(commentToken, columns);
-        pf(filePath, annotation, function(done) {
-            if (done) {
+        pf(filePath, annotation, function(err, result) {
+            if (!err) {
                 console.log(colors.green('Data prepended to ' + filePath));
-                cb(null);
+                cb();
             } else {
-                console.log(colors.red('ERROR Processed stopped abruptly'));
-                cb('error');
-                process.exit();
+                cb(colors.red('ERROR Processed stopped abruptly'));
             }
         });
 
