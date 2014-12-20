@@ -28,9 +28,13 @@ function annotate(opts, path, tableName, database) {
   if (opts.directory) {
     processDirectory(opts, path, tableName, dataBaseConf);
   } else {
-    processFile(opts, path, tableName, dataBaseConf);
+    processFile(opts, path, tableName, dataBaseConf, function(err) {
+      if (err) {
+        console.log(err);
+      }
+      process.exit();
+    });
   }
-
 
 }
 

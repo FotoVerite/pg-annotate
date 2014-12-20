@@ -1,6 +1,6 @@
 {
   "name": "pg-annotate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Annotates postgres tables and prepend to various files that depend on their structure.",
   "main": "index.js",
   "scripts": {
